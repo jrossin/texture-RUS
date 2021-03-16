@@ -40,17 +40,17 @@ class rus_runinv:
         elif 'c400' in params or 'v1111' in params:
             if len(params) in (3,4):
                 self.dicttot.update({'num_moduli': 9})
-            elif len(params) in (9,10,14,15):
+            elif len(params) in (9,10):
                 self.dicttot.update({'num_moduli': 21})
             else:
                 raise ValueError('Incorrect number of texture coefficients '
                                  'given. 3 constants need to be estimated for '
-                                 'ortho sample symmetry, or 9/14 for '
-                                 'cubic/hexagonal arbitrary sample symmetry '
+                                 'ortho sample symmetry, or 9 for '
+                                 'cubic sample symmetry '
                                  '(respectively)')
         else:
             raise ValueError('Elastic constants (1-9 independent constants) or '
-                             'texture coefficients (3 or 9/14) must be '
+                             'texture coefficients (3 or 9) must be '
                              'specified as params')
 
     def runinverse(self, params, proposals):
@@ -72,32 +72,23 @@ class rus_runinv:
         if std_dev is None:
             param_order +=  ['std_dev']
             param_priors += [ImproperUniform(0, None)]
-
         model = formodel(self.name, self.dicttot, params, param_order)
-
         start_model_eval = time.time()
         if rank == 0:
             print("Time to initialize model(s):")
             print(start_model_eval-start_init)
-
         # run smc
         num_particles = self.dicttot['particles']
         num_smc_steps = self.dicttot['timesteps']
         num_mcmc_steps = self.dicttot['MCMC_steps']
         ess_threshold = 0.75
-        #dictionary of lists of length(particles) with each dictionary key tied to each param
         proposal_samples = dict()
         proposal_pdfs = np.zeros((num_particles, len(param_order)))
         for i, key in enumerate(param_order):
-            #for each parameter in the dict - get distribution specified in the proposals, generate random variates with rvs for each particle
             proposal_samples[key] = proposals[key].rvs(num_particles)
-            #generate (at each param) a list of the the values of the pdf at each randomly variate sampled particle value(mu,std).pdf(particles)
             proposal_pdfs[:, i] = proposals[key].pdf(proposal_samples[key])
-        #take product of the pdf values across all params
         proposal_pdfs = np.product(proposal_pdfs, axis=1)
-        #proposal is tuple of (dictionary with {values:list of particle values randomly sampled from proposal prior}, list of pdf product (multiplied across the # of params) for each particle
         proposal = (proposal_samples, proposal_pdfs)
-
         mcmc = ParallelMCMC(model.evaluate, data, param_priors, comm, std_dev)
         mcmc_kernel = VectorMCMCKernel(mcmc, param_order=param_order)
 
@@ -114,35 +105,25 @@ class rus_runinv:
                                          proposal=proposal,
                                          progress_bar=False)
 
-
-        # add chain dependence for output and save location with numbered chains
         prefix = 'results/inversion_output_' + self.name
         outputfolder = '_output/'
         basefname = prefix + outputfolder + 'chain_' + str(self.chaincount)
         filename = basefname  +'_results.txt'
 
         if not os.path.exists(os.path.dirname(filename)):
-
             try:
                 os.makedirs(os.path.dirname(filename))
             except OSError as exc: # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-
         output_file = open(filename, 'a+')
         output_file.truncate(0)
 
-        '''
-        Each processor will output the number of steps on the processor,
-        all but rank ==0 should be 0(output)
-        '''
         print('sampling complete for core')
         print(time.time()-start_init)
         sys.stdout.flush()
         print(f'step_list_len={len(step_list)}')
-
         if rank == 0:
-
             import pickle
             dumpfile = os.path.join(os.path.dirname(filename), 'dump.p')
             with open(dumpfile, 'wb') as pf:
@@ -166,12 +147,10 @@ class rus_runinv:
             output_file.writelines([f'\n Dimension 3 in mm: {model.d3}'])
             output_file.writelines([f'\n Density: {model.density}'])
             output_file.writelines([f'\n Polynomial Order: {poly_order}'])
-
             output_file.writelines([f'\n SMCPy Parameters'])
             output_file.writelines([f'\n Particle Number: {num_particles}'])
             output_file.writelines([f'\n Number of time_steps: {num_smc_steps}'])
             output_file.writelines([f'\n Number of MCMC steps: {num_mcmc_steps}'])
-
             print('Calculated Variable Means:')
             print(mean)
             output_file.writelines([f'\n Calculated Variable Mean {mean}\n'])
@@ -185,10 +164,6 @@ class rus_runinv:
             print(covar)
             output_file.writelines([f'\n Calculated Variable Covar {covar}\n'])
 
-            '''
-            Change if else to invlude 6x6 output of Cij for direct cij
-            calculations (insert forward tric codes from below)
-            '''
             if 'rs' in mean:
                 meanrs = 100.0 *  mean.get('rs')
                 stdrs = 100.0 * std.get('rs')
@@ -199,43 +174,20 @@ class rus_runinv:
                           show=False, param_names=param_order,
                           prefix=outputpngname)
 
-            #for publication ready single plots
-            # plot_pairwise(s.params[:, :2], weights=s.weights, save=True,
-            #               show=False, param_names=['v1111', 'v1112'],
-            #               prefix=outputpngname + '_single')
-
             if 'c11' in params:
                 output_file.writelines([f'\n 6x6 Cij Mean Output \n {rus.calc_forward_cm(mean, model.ns)}'])
                 output_file.writelines([f'\n 6x6 Cij Std Dev \n {rus.calc_forward_cm(std, model.ns)}'])
-
             elif 'v1111' in params:
-
-
                 print('Single Crystal Elastic Constants used in Model:')
                 print(model.sc)
                 output_file.writelines([f'\n Single Crystal Elastic Constants used in Model: {model.sc}\n'])
-
-
                 output_file.writelines([f'\n Mean 6x6 Vtens \n {rus.voigt(rus.gen_4th_varr(mean))}'])
                 output_file.writelines([f'\n Std Dev 6x6 Vtens \n {rus.voigt(rus.gen_4th_varr(std))}'])
-
-
                 rusprop = rus_propagator('propagated outputs', self.dicttot,params,param_order)
-
                 if rusprop.ns == 9:
                     output_names = rus.out9param()
-
                 elif rusprop.ns == 21:
-
-                    if len(model.sc) == 5:
-                        output_names = rus.out21paramhex()
-                    elif len(model.sc) == 3:
-                        output_names = rus.out21param()
-                    else:
-                        raise ValueError('Only hexagonal and cubic '
-                                         'microsymmetries are supported in '
-                                         'this release')
-
+                    output_names = rus.out21param()
                 else:
                     raise ValueError('Number texture coefficients is not '
                         'registering correctly as solving for 9 or 21 elastic '
@@ -251,11 +203,6 @@ class rus_runinv:
                     hsuppslice = slice(21,42)
                     hslowslice = slice(42,63)
                     clmnslice = slice(63,72)
-                elif len(output_names) == 77:
-                    cijindex = slice(0,21)
-                    hsuppslice = slice(21,42)
-                    hslowslice = slice(42,63)
-                    clmnslice = slice(63,77)
 
                 resfreqname = []
                 for i in range(nfreq):
@@ -270,28 +217,13 @@ class rus_runinv:
                 smcstepcijstddev = smc_step_cij.compute_std_dev()
                 smcstepcijcovar = smc_step_cij.compute_covariance()
 
-                #commented out for high propagated parameter #
-                # print('All Propagated Means:')
-                # print(smcstepcijmean)
                 output_file.writelines([f'\n \n All Propagated Means: \n {smcstepcijmean}'])
-
-                # print('All Propagated Variances:')
-                # print(smcstepcijvar)
                 output_file.writelines([f'\n All Propagated Variances \n {smcstepcijvar}'])
-
-                # print('All Propagted Std_Devs:')
-                # print(smcstepcijstddev)
                 output_file.writelines([f'\n All Propagted Std Devs: \n {smcstepcijstddev}'])
-
-                # print('Covar:')
-                # print(smcstepcijcovar)
                 output_file.writelines([f'\n Ordered Covariance Matrix (by input parameter order) \n {smcstepcijcovar}'])
 
-
-                #Write propagated cij output
                 output_file.writelines([f'\n Propagated Mean Self Consistent Cij 6x6 Voigt Tensor: \n {rus.calc_forward_cm(smcstepcijmean,rusprop.ns)}'])
                 output_file.writelines([f'\n Propagated Std Dev Self Consistent Cij 6x6 Voigt Tensor \n {rus.calc_forward_cm(smcstepcijstddev,rusprop.ns)}'])
-
 
                 HSuppavg = rus.forward_tric_HSupp(smcstepcijmean)
                 HSuppstd = rus.forward_tric_HSupp(smcstepcijstddev)
@@ -311,9 +243,6 @@ class rus_runinv:
                 print(HSlowstd)
                 output_file.writelines([f'\n Lower 6x6 HS bound Propagated Std Dev: \n {HSlowstd}'])
 
-
-
-
                 cijkeys = output_names[cijindex]
                 hsuppkeys = output_names[hsuppslice]
                 hslowkeys = output_names[hslowslice]
@@ -321,57 +250,34 @@ class rus_runinv:
 
                 rus.outputmatlabclmnrawdata(smc_step_cij.params[:,clmnslice],smc_step_cij.weights,basefname)
 
-                if len(model.sc) == 3:
-                    clmnmean = rus.ctodictimagcub(smcstepcijmean)
-                    clmnvariance = rus.ctodictimagcub(smcstepcijvar)
-                    clmnstd = rus.ctodictimagcub(smcstepcijstddev)
-                    print('Mean Propagated Clmn:')
-                    print(clmnmean)
-                    output_file.writelines([f'\n \n Mean Propagated Clmn: \n {clmnmean}'])
-                    output_file.writelines([f'\n \n Variance Propagated Clmn: \n {clmnvariance}'])
-                    print('Std Dev Propagated Clmn:')
-                    print(clmnstd)
-                    output_file.writelines([f'\n Std Dev Propagated Clmn: \n{clmnstd}'])
 
-
-                elif len(model.sc) == 5:
-                    clmnmean = rus.ctodictheximag(smcstepcijmean)
-                    clmnstd = rus.ctodictheximag(smcstepcijstddev)
-                    print('Mean Propagated Clmn:')
-                    print(clmnmean)
-                    output_file.writelines([f'\n \n Mean Propagated Clmn: \n {clmnmean}'])
-                    print('Std Dev Propagated Clmn:')
-                    print(clmnstd)
-                    output_file.writelines([f'\n Std Dev Propagated Clmn: \n {clmnstd}'])
+                clmnmean = rus.ctodictimagcub(smcstepcijmean)
+                clmnvariance = rus.ctodictimagcub(smcstepcijvar)
+                clmnstd = rus.ctodictimagcub(smcstepcijstddev)
+                print('Mean Propagated Clmn:')
+                print(clmnmean)
+                output_file.writelines([f'\n \n Mean Propagated Clmn: \n {clmnmean}'])
+                output_file.writelines([f'\n \n Variance Propagated Clmn: \n {clmnvariance}'])
+                print('Std Dev Propagated Clmn:')
+                print(clmnstd)
+                output_file.writelines([f'\n Std Dev Propagated Clmn: \n{clmnstd}'])
 
                 frmean = rus.fr_toarray(smcstepcijmean,resfreqname)
                 frstd = rus.fr_toarray(smcstepcijstddev,resfreqname)
                 output_file.writelines([f'\n \n Mean Propagated F_r: \n {frmean}'])
                 output_file.writelines([f'\n \n Std Dev Propagated F_r: \n {frstd}'])
 
-
                 outputpngnamepropcij = outputpngname + '_propagatedcij'
                 plot_pairwise(smc_step_cij.params[:,cijindex],weights=smc_step_cij.weights,save=True, show=False,
                                                   param_names=cijkeys,
                                                   prefix=outputpngnamepropcij)
-                # outputpngnameprophsupp = outputpngname + '_propagatedHSupp'
-                # plot_pairwise(smc_step_cij.params[:,hsuppslice],weights=smc_step_cij.weights,save=True, show=False,
-                #                                   param_names=hsuppkeys,
-                #                                   prefix=outputpngnameprophsupp)
-                # outputpngnameprophslow = outputpngname + '_propagatedHSlow'
-                # plot_pairwise(smc_step_cij.params[:,hslowslice],weights=smc_step_cij.weights,save=True, show=False,
-                #                                   param_names=hslowkeys,
-                #                                   prefix=outputpngnameprophslow)
+
                 outputpngnameprop_clmn = outputpngname + '_propagated_clmn'
                 clmnparamslice = smc_step_cij.params[:,clmnslice]
                 clmnimagcub = np.concatenate((np.stack(((clmnparamslice[:,8]).imag,(clmnparamslice[:,7]).imag,(clmnparamslice[:,6]).imag,(clmnparamslice[:,5]).imag),axis=1),clmnparamslice[:,4:9]),axis=1)
-                if len(model.sc) == 3:
 
-                    clmnkeysalt = np.array(['c440imag','c430imag','c420imag','c410imag','c400','c410','c420','c430','c440'])
-                elif len(model.sc) == 5:
+                clmnkeysalt = np.array(['c440imag','c430imag','c420imag','c410imag','c400','c410','c420','c430','c440'])
 
-                    clmnimagcub = np.concatenate((clmnimagcub,np.concatenate((np.stack(((clmnparamslice[:,13]).imag,(clmnparamslice[:,12]).imag),axis=1),clmnparamslice[:,11:14]),axis=1)),axis=1)
-                    clmnkeysalt = np.array(['c440imag','c430imag','c420imag','c410imag','c400','c410','c420','c430','c440','c220imag','c210imag','c200','c210','c220'])
                 plot_pairwise(clmnimagcub,weights=smc_step_cij.weights,save=True, show=False,
                                                   param_names=clmnkeysalt,
                                                   prefix=outputpngnameprop_clmn)
@@ -381,9 +287,6 @@ class rus_runinv:
                       'tensor input for now')
             else:
                 raise ValueError('Inputs not recognized as Cij, Clmn, or Vijkl, exiting.')
-
-
-
 
         end1 = time.time()
         total_time = end1-start_init

@@ -24,17 +24,17 @@ class rusrun_forward():
 
             if len(params) in (3,4):
                 self.dicttot.update({'num_moduli': 9})
-            elif len(params) in (9,10,14,15):
+            elif len(params) in (9,10):
                 self.dicttot.update({'num_moduli': 21})
             else:
                 raise ValueError('Incorrect number of texture coefficients '
                                  'given. 3 constants need to be estimated for '
-                                 'ortho sample symmetry, or 9/14 for '
-                                 'cubic/hexagonal arbitrary sample symmetry '
+                                 'ortho sample symmetry, or 9 for '
+                                 'cubic arbitrary sample symmetry '
                                  '(respectively) - NOTE RS term is an additional degree of freedom')
         else:
             raise ValueError('Elastic constants (1-9 independent constants) or '
-                             'texture coefficients (3 or 9/14) must be '
+                             'texture coefficients (3 or 9) must be '
                              'specified as params')
 
     def runforward(self, params):
@@ -52,12 +52,8 @@ class rusrun_forward():
             except OSError as exc: # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-
-
         output_file = open(fname, 'a+')
         output_file.truncate(0)
-
-
 
         start_init = time.time()
 
@@ -96,7 +92,7 @@ class rusrun_forward():
             output_file.writelines([f'\n Input Parameters to Forward Model: \n',
                                    str(params)])
             output_file.writelines([f'\n 6x6 4th order Vtens \n {rus.voigt(rus.gen_4th_varr(params))}'])
-            #insert translation to CLMN if desired - HERE
+
             print('Upper HS Bound:')
             print(model.upper_HS)
             output_file.writelines([f'\n Upper HS bound from V input: \n {model.upper_HS}'])
@@ -109,10 +105,9 @@ class rusrun_forward():
             print('Voigt Bound:')
             print(model.voigt)
             output_file.writelines([f'\n Voigt bound from V input: \n {model.voigt}'])
-            if len(model.sc) == 3:
-                clmn = rus.mvtoc(params)
-            elif len(model.sc) == 5:
-                clmn = rus.mvtoc_hex(params)
+
+            clmn = rus.mvtoc(params)
+
             output_file.writelines([f'\n Clmn: \n {clmn}'])
             print('Clmn:')
             print(clmn)

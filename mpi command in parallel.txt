@@ -1,1 +1,1 @@
-mpiexec -n 8 python name_offil.py
+mpiexec -n 8 python run_interface.py
