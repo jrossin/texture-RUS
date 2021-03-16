@@ -9,9 +9,8 @@ from smcpy import ImproperUniform
 
 if __name__ == "__main__":
     # inputs - polynomial order (must be even), dims(m), density (kg/m^3),
-
     inputs = {'order': 12, 'd1': 0.006914 , 'd2': 0.008215, 'd3': 0.008672, 'density': 8589.062}
-    problem_type = 'inverse'
+    problem_type = 'forward'
 
     name = f"{str(datetime.now()).split(' ')[0]}"
 
@@ -27,9 +26,6 @@ if __name__ == "__main__":
 
         np.random.seed(4)
         inputs.update({'sc11': 236.4, 'sc12': 150.8, 'sc44': 134.1}) #coni SC
-
-        #Directly calculate cij
-        #param_priors = {'c11':['normal', 290.0, 50.0],'c22':['normal', 290.0, 50.0],'c33':['normal', 290.0, 50.0],'c12':['normal', 130.0, 30.0],'c13':['normal', 130.0, 30.0],'c23':['normal', 130.0, 30.0],'c44':['normal', 85.5,15.0],'c55':['normal', 85.5,15.0],'c66':['normal', 85.5,15.0],'c14':['normal', 0.1, 30.0],'c15':['normal', 0.1, 30.0],'c16':['normal', 0.1, 30.0],'c24':['normal', 0.1, 30.0],'c25':['normal', 0.1, 30.0],'c26':['normal', 0.1, 30.0],'c34':['normal', 0.1, 30.0],'c35':['normal', 0.1, 30.0],'c36':['normal', 0.1, 30.0],'c45':['normal', 0.1, 30.0],'c46':['normal', 0.1, 30.0],'c56':['normal', 0.1, 30.0]}
 
         param_priors = {'v1111': ImproperUniform(),
                         'v1112': ImproperUniform(),
@@ -61,7 +57,7 @@ if __name__ == "__main__":
         Good place to believe results is particles: 4000, timesteps 45,
         MCMC 5-8
         '''
-        inputs.update({'particles': 5000, 'timesteps': 30, 'MCMC_steps': 6})
+        inputs.update({'particles': 50, 'timesteps': 2, 'MCMC_steps': 2})
 
         inversemodel = rus_runinv(name, 1, inputs, param_priors, filename)
         inversemodel.runinverse(param_priors, proposals)

@@ -24,7 +24,7 @@ class rus_propagator(BaseModel):
         self.sc['sc11'] = inputdict.get('sc11')
         self.sc['sc12'] = inputdict.get('sc12')
         self.sc['sc44'] = inputdict.get('sc44')
-        if len(self.sc) in (3):
+        if len(self.sc) == 3:
             self.zeroboundlow, self.zeroboundhigh, self.csci_e, self.cs = rus.calc_zero_bounds(self.sc)
         elif len(self.sc) != 0:
             print('Wrong number of single crystal constants given for cubic single xtal - other symmetries will be supported in a later release')
