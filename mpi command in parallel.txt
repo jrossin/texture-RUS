@@ -1,1 +1,0 @@
-mpiexec -n 8 python run_interface.py
