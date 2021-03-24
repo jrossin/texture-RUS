@@ -17,6 +17,8 @@
     - if working with an anaconda installation in windows 'conda env create -f environmentwinconda.yml'
     - if working with an anaconda install on linux/ ubuntu 'conda env create -f environmentubuntu20.yml'
     - This will initialize a new conda environment with name py3smcpy (specified inside the virtual environment, can be changed if desired)
+    - The *requirements.txt* file can alternatively be used to see the minimum versions of the packages needed to run this code
+    - A less intensive option may be to simply to clone the git repos as-is, link them up correctly in conda, and continue through the steps to the bottom. When it comes time to run the model, simply install the packages that do not exist as errors occur.
 4. Activate (enter) the virtual environment you created, and download these packages into it.
     - 'activate *virtualenvname*
     - Download Mpi4py if you desire to parallelize your simulations
@@ -28,6 +30,7 @@
 
 ## PREPARING A RUN/ RUNNING THE CODES
 1. Ensure that all errors are cleared when navigating/ opening anaconda, these are generally system specific.
+
 2. User input
     - handled within the *run_'modeltype'.py* file.
     - Changing the variable "problem_type" within the run_interface.py file will change from a forward model evaluation to an inverse model evaluation.
