@@ -25,7 +25,6 @@ prompt-toolkit==1.0.15
 ptyprocess==0.6.0
 py==1.7.0
 Pygments==2.2.0
-pymc==2.3.6
 pyparsing==2.3.0
 pytest==4.0.1
 pytest-cov==2.6.0

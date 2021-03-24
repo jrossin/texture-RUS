@@ -1,0 +1,34 @@
+
+Input Prior ImproperUniform()
+Parameter Proposals are norm(Mean,Std_dev) for V or invgamma(mean,std) for sigma(std_dev):
+{'v1111': (0.001, 0.2), 'v1112': (0.001, 0.2), 'v1113': (0.001, 0.2), 'v1122': (0.001, 0.2), 'v1123': (0.001, 0.2), 'v1222': (0.001, 0.2), 'v1223': (0.001, 0.2), 'v2222': (0.001, 0.2), 'v2223': (0.001, 0.2), 'rs': (-0.01, 0.005), 'std_dev': (4.166666666666666, 0.8688100585711449)}
+
+ Dimension 1 in mm: 0.006914
+ Dimension 2 in mm: 0.008215
+ Dimension 3 in mm: 0.008672
+ Density: 8589.062
+ Polynomial Order: 12
+ SMCPy Parameters
+ Particle Number: 600
+ Number of time_steps: 2
+ Number of MCMC steps: 2
+ Calculated Variable Mean {'v1111': 0.0, 'v1112': 0.0, 'v1113': 0.0, 'v1122': 0.0, 'v1123': 0.0, 'v1222': 0.0, 'v1223': 0.0, 'v2222': 0.0, 'v2223': 0.0, 'rs': 0.0, 'std_dev': 0.0}
+
+ Calculated Variable Variance {'v1111': 0.0, 'v1112': 0.0, 'v1113': 0.0, 'v1122': 0.0, 'v1123': 0.0, 'v1222': 0.0, 'v1223': 0.0, 'v2222': 0.0, 'v2223': 0.0, 'rs': 0.0, 'std_dev': 0.0}
+
+ Calculated Variable Std Dev {'v1111': 0.0, 'v1112': 0.0, 'v1113': 0.0, 'v1122': 0.0, 'v1123': 0.0, 'v1222': 0.0, 'v1223': 0.0, 'v2222': 0.0, 'v2223': 0.0, 'rs': 0.0, 'std_dev': 0.0}
+
+ Calculated Variable Covar [[0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]]
+
+ Residual stress factor across all frequencies (in %): 
+ N(0.0, 0.0)
