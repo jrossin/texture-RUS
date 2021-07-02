@@ -13,9 +13,10 @@ class formodel:
         self.name = name
         self.param_order = param_order
         self.polynomial_order = inputdict.get('order', 8)
+
         self.density = inputdict.get('density', 6)
         self.ns = inputdict.get('num_moduli')
-
+        self.nfreq = inputdict.get('nfreq', 100)
         #sample dimensions directly used
         self.d1 = inputdict.get('d1')
         self.d2 = inputdict.get('d2')
@@ -47,10 +48,13 @@ class formodel:
 
         self.cmat = np.zeros((6,6), dtype=np.float64)
 
+        if self.polynomial_order == None:
+            #set high polynomial order as convergent set of frequencies.
+            poly_order_converge = 20
+            self.polynomial_order = rus.poly_optimize(self.d1,self.d2,self.d3,self.density,self.nfreq,20)
+
         self.M, self.K_arr = rus.build_basis(self.polynomial_order, self.d1,
                                              self.d2,self.d3, self.density)
-
-        self.nfreq = inputdict.get('nfreq', 100)
 
         self.outeigen = sys.stdout
 

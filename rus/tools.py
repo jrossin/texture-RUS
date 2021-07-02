@@ -1346,3 +1346,27 @@ def mvtocarr(vdict):
     c_arr = np.dot(trans_arr,varr)
 
     return c_arr
+def poly_optimize(d1,d2,d3,density,nfreq,n):
+        #using random elastic constants from CoNi alloy
+        print('Running adaptive determination of polynomial order.')
+        cvect = rus.c_vect_create_dict({'c11':276.43 ,'c22': 270.8 ,'c33': 271.68 ,'c44': 104.83 ,'c55': 98.73 ,'c66': 98.75 ,'c12': 131.2 ,'c13': 130.3 ,'c23': 135.97 ,'c14':2.272 ,'c15':4.184 ,'c16':16.3 ,'c24':1.57927 ,'c25':4.906 ,'c26':2.251 ,'c34':0.6936 ,'c35': 0.7222 ,'c36':14.117 ,'c45':17.113 ,'c46':6.25 ,'c56':4.26})
+
+        M_ref, K_arr_ref = rus.build_basis(n, d1,
+                                             d2,d3, density)
+        comparisonfreqs = rus.mech_rus(nfreq, M_ref, K_arr_ref,
+                                    0.01 * cvect, n)
+        for i in range(2,16,2):
+            curr_poly = n - i
+            M_curr, K_arr_curr = rus.build_basis(curr_poly, d1,
+                                             d2,d3, density)
+            freqscurr = rus.mech_rus(nfreq, M_curr, K_arr_curr,
+                                    0.01 * cvect, curr_poly)
+            percdiff_modewise = (freqscurr - comparisonfreqs)/comparisonfreqs * 100
+            maxabspercdiff = np.amax(np.absolute(percdiff_modewise))
+            #when the maximum percent difference of any single mode is larger than 0.05%, break out of loop and use the previous polynomial order.
+            if maxabspercdiff > 0.05:
+                ideal_polyorder = curr_poly + 2
+                print('Optimized polynomial order for a maximum differential of 0.05 percent at any mode set as: ' + str(ideal_polyorder))
+                break
+
+        return ideal_polyorder
