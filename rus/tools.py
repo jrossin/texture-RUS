@@ -1318,6 +1318,19 @@ def varralttodict(varr):
     vdict['v2223'] = varr[8]
     return vdict
 
+def v4_to_arr(v4tensreal):
+    vv = voigt(v4tensreal)
+    v11 = vv[0,0]
+    v16 = vv[0,5]
+    v15 = vv[0,4]
+    v12 = vv[0,1]
+    v14 = vv[0,3]
+    v26 = vv[1,5]
+    v46 = vv[3,5]
+    v22 = vv[1,1]
+    v24 = vv[1,3]
+    varr = np.array(([v11,v16,v15,v12,v14,v26,v46,v22,v24]),dtype=np.float64)
+    return varr
 def mvtocarr(vdict):
 
     v11 = vdict.get('v1111')
@@ -1346,6 +1359,30 @@ def mvtocarr(vdict):
     c_arr = np.dot(trans_arr,varr)
 
     return c_arr
+
+def rotsymmnegx():
+    mat = np.array([[1.0,0.0,0.0],[0.0,-1.0,0.0],[0.0,0.0,-1.0]])
+    return mat
+def rotsymmnegy():
+    mat = np.array([[-1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,-1.0]])
+    return mat
+def rotsymmnegz():
+    mat = np.array([[-1.0,0.0,0.0],[0.0,-1.0,0.0],[0.0,0.0,1.0]])
+    return mat
+def rotarbit(vdict,str):
+    vten4 = gen_4th_varr(vdict)
+    if str == 'y':
+        return rotT4th(vten4,rotsymmnegy())
+    elif str == 'z':
+        return rotT4th(vten4,rotsymmnegz())
+    elif str == 'x':
+        return rotT4th(vten4,rotsymmnegx())
+def rotT4th(tens,g):
+    gg = np.outer(g, g)
+    gggg = np.outer(gg, gg).reshape(4 * g.shape)
+    axes = ((0, 2, 4, 6), (0, 1, 2, 3))
+    return np.tensordot(gggg, tens, axes)
+
 def poly_optimize(d1,d2,d3,density,nfreq,n):
         #using random elastic constants from CoNi alloy
         print('Running adaptive determination of polynomial order.')
