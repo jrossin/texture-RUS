@@ -1,6 +1,7 @@
 # texture-RUS
 Inverse determination of texture and elastic constants from resonant frequencies (gathered by RUS) by pairing with the inverse solving python package SMCPy
-Published at #####
+Published at https://doi.org/10.1016/j.actamat.2021.117287
+"Rossin, J., Leser, P., Pusch, K., Frey, C., Murray, S. P., Torbet, C. J., ... & Pollock, T. M. (2021). Bayesian inference of elastic constants and texture coefficients in additively manufactured cobalt-nickel superalloys using resonant ultrasound spectroscopy. Acta Materialia, 220, 117287."
 Written by Jeff Rossin (jrossin@engineering.ucsb.edu)
 
 ## clone both the SMCpy package and the Texture Inversion codes
