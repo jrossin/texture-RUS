@@ -24,7 +24,7 @@ Written by Jeff Rossin (jrossin@engineering.ucsb.edu)
 
 3. Running an inverse model:
     - cd to the directory with the *run_texture_inverse.py* or  *run_cij_inverse.py* file.
-    - List of experimental resonance frequencies in a file (feel free to copy and edit an existing one, such as freq_R2_CoNi_20deg_ab_70_polished), with your own list of resonance frequencies in kHz. The first line of the file should contain the number of resonance frequencies you want to use for your inversion. Update the 'filename' variable in run_interface.py to your new filename
+    - List of experimental resonance frequencies in a file, with your own list of resonance frequencies in kHz. The first line of the file should contain the number of resonance frequencies you want to use for your inversion. Update the 'filename' variable in run_interface.py to your new filename
     - Ranges of of elastic constants (Cij, in GPa) or texture coefficients (Clmn or Vijkl) to solve for during the inference - this is contained in the 'params' dict()
     - The number of chains (independent simulations) to run. Typically 1 is sufficient with SMC, though more are possible for parameter studies
     - SMCPy specific parameters such as particle count, timesteps, and mcmc (markoc chain monte carlo) steps must be specified. These can be understood from the publication [Efficient Sequential Monte-Carlo Samplers for Bayesian Inference](10.1109/TSP.2015.2504342) by Nguyen et al.; They are also well summarized within the SMCPy package instructions. The parameters are linked to the complexity of your inversion, and higher numbers require greater time but yield greater precision of results. A good place to start is particles-3000, timesteps-30, MCMCsteps - 6.
